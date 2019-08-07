@@ -1,12 +1,10 @@
-package com.apidoc;
+package com.demo;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-@MapperScan("com.apidoc.dao")//mybatis-plus mapper扫描
 public class ApiDocApplication {
 
     private static String port;

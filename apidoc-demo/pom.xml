@@ -1,47 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>java-api-doc</artifactId>
+        <groupId>com.apidoc</groupId>
+        <version>1.0.0</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.apidoc</groupId>
-    <artifactId>java-api-doc</artifactId>
-    <version>1.0.0</version>
-    <modules>
-        <module>apidoc</module>
-    </modules>
-    <packaging>pom</packaging>
-
-    <name>java-api-doc</name>
-    <description>解析代码自动生成api接口文档的工具</description>
-
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.9.RELEASE</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
+    <artifactId>apidoc-demo</artifactId>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
     </properties>
-
-    <!-- 使用阿里 maven 库 -->
-    <repositories>
-        <repository>
-            <id>ali-maven</id>
-            <url>http://maven.aliyun.com/nexus/content/groups/public</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-                <checksumPolicy>fail</checksumPolicy>
-            </snapshots>
-        </repository>
-    </repositories>
 
 
     <dependencies>
@@ -78,6 +51,27 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
         </dependency>
+        <!--阿里Druid数据库连接池-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+            <version>1.1.6</version>
+        </dependency>
+        <!--模块引入方式-->
+        <dependency>
+            <groupId>com.apidoc</groupId>
+            <artifactId>apidoc</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <!--jar包引入方式-->
+       <!-- <dependency>
+            <groupId>com.apidoc</groupId>
+            <artifactId>apidoc</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/src/main/resources/lib/apidoc-1.0.0.jar</systemPath>
+        </dependency>-->
     </dependencies>
 
     <build>

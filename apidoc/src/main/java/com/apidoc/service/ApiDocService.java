@@ -29,12 +29,26 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.sql.DataSource;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 生成API文档工具类
@@ -51,14 +65,14 @@ public class ApiDocService {
 
     //初始化
     static {
-        typeMap.put(byte.class, Const.number);
-        typeMap.put(short.class, Const.number);
-        typeMap.put(int.class, Const.number);
-        typeMap.put(long.class, Const.number);
-        typeMap.put(float.class, Const.number);
-        typeMap.put(double.class, Const.number);
-        typeMap.put(char.class, Const.string);
-        typeMap.put(boolean.class, Const.booleann);
+        typeMap.put(byte.class, Const.NUMBER);
+        typeMap.put(short.class, Const.NUMBER);
+        typeMap.put(int.class, Const.NUMBER);
+        typeMap.put(long.class, Const.NUMBER);
+        typeMap.put(float.class, Const.NUMBER);
+        typeMap.put(double.class, Const.NUMBER);
+        typeMap.put(char.class, Const.STRING);
+        typeMap.put(boolean.class, Const.BOOLEANN);
     }
 
     @Autowired
@@ -191,6 +205,7 @@ public class ApiDocService {
 
     /**
      * 关闭数据库连接
+     *
      * @param connection
      * @param preparedStatement
      */
@@ -287,12 +302,15 @@ public class ApiDocService {
             for (Class claszz : classSet) {
                 //获取元数据
                 Api api = (Api) claszz.getAnnotation(Api.class);
-                String name = StringUtil.isNotEmpty(api.value()) ? api.value() : claszz.getName();//没有写明模块名称时 默认取类名全称 com.xxx.xxx
-                Integer order = Integer.MAX_VALUE;//默认排序int最大值
+                //没有写明模块名称时 默认取类名全称 com.xxx.xxx
+                String name = StringUtil.isNotEmpty(api.value()) ? api.value() : claszz.getName();
+                //默认排序int最大值
+                Integer order = Integer.MAX_VALUE;
                 String className = claszz.getName();
                 //判断数据库是否已经存在
                 ApidocModule apidocModule = moduleMap.get(name);
-                if (apidocModule != null) {//模块已存在时，判断class是否已经存在模块信息中
+                //模块已存在时，判断class是否已经存在模块信息中
+                if (apidocModule != null) {
                     String classListStr = apidocModule.getClassList();
                     if (!classListStr.contains(className)) {
                         apidocModule.setClassList(apidocModule.getClassList() + "," + className);
@@ -369,7 +387,8 @@ public class ApiDocService {
                         List<ApidocAction> actions = new ArrayList<>(methods.length);
                         for (Method method : methodList) {
                             //todo 暂时没处理方法重载
-                            String methodUUID = claszz.getName() + "-" + method.getName();//方法名 格式：全类名-方法名
+                            //方法名 格式：全类名-方法名
+                            String methodUUID = claszz.getName() + "-" + method.getName();
                             //返回前端的数据
                             ApidocAction action = actionMap.get(methodUUID);
                             //判断数据库中是否已经存在该接口信息,不存在时添加
@@ -378,7 +397,8 @@ public class ApiDocService {
                                 action.setMethodUUID(methodUUID);
                                 //得到方法的注释信息
                                 String name = methodNotes.get(methodUUID);
-                                action.setName(StringUtil.isEmpty(name) ? method.getName() : name);//有注释时用注释 没有时默认方法的名称
+                                //有注释时用注释 没有时默认方法的名称
+                                action.setName(StringUtil.isEmpty(name) ? method.getName() : name);
                                 action.setOrder(Integer.MAX_VALUE);
                                 action.setModuleId(moduleId);
                                 //写入数据库
@@ -414,9 +434,6 @@ public class ApiDocService {
 
     /**
      * 修改action
-     *
-     * @param apidocAction
-     * @return
      */
     public boolean updateAction(ApidocAction apidocAction) {
         return apidocActionDao.updateById(apidocAction) > 0;
@@ -424,29 +441,19 @@ public class ApiDocService {
 
     /**
      * 修改模块的排序
-     *
-     * @param apidocModuleList
-     * @return
      */
     @Transactional
     public boolean updateModulesSort(List<ApidocModule> apidocModuleList) {
-        apidocModuleList.forEach(m -> {
-            apidocModuleDao.updateById(m);
-        });
+        apidocModuleList.forEach(m -> apidocModuleDao.updateById(m));
         return true;
     }
 
     /**
      * 修改action的排序
-     *
-     * @param apidocActionList
-     * @return
      */
     @Transactional
     public boolean updateActionsSort(List<ApidocAction> apidocActionList) {
-        apidocActionList.forEach(m -> {
-            apidocActionDao.updateById(m);
-        });
+        apidocActionList.forEach(m -> apidocActionDao.updateById(m));
         return true;
     }
 
@@ -459,7 +466,8 @@ public class ApiDocService {
      */
     @Transactional
     public Detail getDetail(Integer id, String methodUUID) {
-        String[] split = methodUUID.split("-");//拆分类名和方法名
+        //拆分类名和方法名
+        String[] split = methodUUID.split("-");
         if (split.length == 2) {
             String className = split[0];
             Class claszz = getClassByName(className);
@@ -469,8 +477,10 @@ public class ApiDocService {
                 // 即：重名相同但是参数列表不同（参数的类型 数量 顺序不同）
                 Method method = getMethod(claszz, methodName);
                 if (method != null) {
-                    String mapping = SpringUtil.getMapping(claszz) + SpringUtil.getMapping(method);//url 映射 mapping 为类上的mapping+方法上的mapping
-                    String requestMethod = SpringUtil.getRequestMethod(method);//请求方式
+                    //url 映射 mapping 为类上的mapping+方法上的mapping
+                    String mapping = SpringUtil.getMapping(claszz) + SpringUtil.getMapping(method);
+                    //请求方式
+                    String requestMethod = SpringUtil.getRequestMethod(method);
                     String description = apidocActionDao.selectDescriptionById(id);
                     //请求参数和响应参数
                     Params requestParams = getParams(id, method);
@@ -612,17 +622,21 @@ public class ApiDocService {
                                      Class pclass, Integer pid, boolean isSelf, boolean isReturn) {
         ApidocParam item = new ApidocParam();
         item.setPid(pid);
-        if (StringUtil.isEmpty(paramName)) {//基本类型可能取不到class的名称 这里toString一下
+        //基本类型可能取不到class的名称 这里toString一下
+        if (StringUtil.isEmpty(paramName)) {
             paramName = tclass.toString();
         }
         item.setName(paramName);
         item.setDefaultValue(getObjectDefaultValue(tclass) + "");
-        item.setRequired(true);//默认必须
+        //默认必须
+        item.setRequired(true);
         item.setActionId(actionId);
-        if (isReturn) {//如果是返回值的参数需要标注
+        //如果是返回值的参数需要标注
+        if (isReturn) {
             item.setReturnd(true);
         }
-        if (pclass != null) {//设置所属类名
+        //设置所属类名
+        if (pclass != null) {
             String pclassName = pclass.getName();
             item.setPclassName(pclassName);
             Map<String, String> fieldsNotes = StringUtil.getFieldsNotes(pclassName);
@@ -648,12 +662,13 @@ public class ApiDocService {
             //获得数组类型
             Class typeClass = tclass.getComponentType();
             String shortName = typeClass.getSimpleName();
-            item.setDataType(Const.array + shortName);
+            item.setDataType(Const.ARRAY + shortName);
             item.updateById();
             //添加到list
             list.add(item);
             //处理多维数组
-            isType(list, actionId, typeClass.getSimpleName().toLowerCase(), typeClass, null, tclass, item.getId(), isSelf, isReturn);
+            isType(list, actionId, typeClass.getSimpleName().toLowerCase(),
+                    typeClass, null, tclass, item.getId(), isSelf, isReturn);
         }
 
         //泛型 或泛型中嵌套泛型
@@ -661,14 +676,15 @@ public class ApiDocService {
             ParameterizedType aType = (ParameterizedType) genType;
             Type[] parameterArgTypes = aType.getActualTypeArguments();
             //todo 先支持collection和map类型 后期有需要再加
-            if (Collection.class.isAssignableFrom(tclass)) {//是Collection
+            if (Collection.class.isAssignableFrom(tclass)) {
+                // 是Collection
                 Type type = parameterArgTypes[0];
                 String[] split = type.getTypeName().split("<");
                 if (split.length > 0) {
                     Class typeClass = null;
                     try {
                         typeClass = Class.forName(split[0]);
-                        item.setDataType(Const.array + typeClass.getSimpleName());
+                        item.setDataType(Const.ARRAY + typeClass.getSimpleName());
                         item.updateById();
                         list.add(item);
                         isType(list, actionId, typeClass.getSimpleName().toLowerCase(), typeClass, type, tclass, item.getId(), isSelf, isReturn);
@@ -676,11 +692,13 @@ public class ApiDocService {
                         e.printStackTrace();
                     }
                 }
-            } else if (Map.class.isAssignableFrom(tclass)) {// 是 Map map比较特殊，只能运行时得到值，用户只能页面手动修改了
-                item.setDataType(Const.object + "Map");
+            } else if (Map.class.isAssignableFrom(tclass)) {
+                // 是 Map map比较特殊，只能运行时得到值，用户只能页面手动修改了
+                item.setDataType(Const.OBJECT + "Map");
                 item.updateById();
                 list.add(item);
-            } else if (parameterArgTypes.length == 1 && tclass.getName().contains("Result")) {// 针对自定义类型 Result<T> 特殊处理
+            } else if (parameterArgTypes.length == 1 && tclass.getName().contains("Result")) {
+                // 针对自定义类型 Result<T> 特殊处理
                 //保存对象中属性名为data的类型
                 class4data = (Class) parameterArgTypes[0];
             }
@@ -688,38 +706,39 @@ public class ApiDocService {
 
         //基本类型 ：字符串，数字，文件，时间日期类型
         //数字
-        if (Number.class.isAssignableFrom(tclass) || Const.number.equals(typeMap.get(tclass))) {
-            item.setDataType(Const.number);
+        if (Number.class.isAssignableFrom(tclass) || Const.NUMBER.equals(typeMap.get(tclass))) {
+            item.setDataType(Const.NUMBER);
             item.updateById();
             list.add(item);
         }
         //字符串
-        if (CharSequence.class.isAssignableFrom(tclass) || Character.class.isAssignableFrom(tclass) || Const.string.equals(typeMap.get(tclass))) {
-            item.setDataType(Const.string);
+        if (CharSequence.class.isAssignableFrom(tclass) || Character.class.isAssignableFrom(tclass) || Const.STRING.equals(typeMap.get(tclass))) {
+            item.setDataType(Const.STRING);
             item.updateById();
             list.add(item);
         }
         //boolean
-        if (Boolean.class.isAssignableFrom(tclass) || Const.booleann.equals(typeMap.get(tclass))) {
-            item.setDataType(Const.booleann);
+        if (Boolean.class.isAssignableFrom(tclass) || Const.BOOLEANN.equals(typeMap.get(tclass))) {
+            item.setDataType(Const.BOOLEANN);
             item.updateById();
             list.add(item);
         }
         //文件 MultipartFile
         if (InputStreamSource.class.isAssignableFrom(tclass)) {
-            item.setDataType(Const.file);
+            item.setDataType(Const.FILE);
             item.updateById();
             list.add(item);
         }
         //文件 MultipartFile
         if (Date.class.isAssignableFrom(tclass)) {
-            item.setDataType(Const.date);
+            item.setDataType(Const.DATE);
             item.updateById();
             list.add(item);
         }
         //自定义对象类型
         if (isMyClass(tclass)) {
-            item.setDataType(Const.object + tclass.getSimpleName());//自定义对象类型为对象的名称
+            //自定义对象类型为对象的名称
+            item.setDataType(Const.OBJECT + tclass.getSimpleName());
             item.updateById();
             list.add(item);
             //获得对象的所有字段 包括继承的所有父类的属性
@@ -736,7 +755,8 @@ public class ApiDocService {
                         class4data = null;
                     }
                     //考虑对象的字段可能是对象  可能存在 自嵌套 互相嵌套的类
-                    if (typeClass == tclass && isSelf) {//自嵌套  只走一次
+                    //自嵌套  只走一次
+                    if (typeClass == tclass && isSelf) {
                         isType(list, actionId, fieldName, typeClass, null, tclass, item.getId(), false, isReturn);
                     }
                     if (typeClass != tclass) {
@@ -902,30 +922,30 @@ public class ApiDocService {
      * @return Params
      */
     private Params getReturn(Integer actionId, Method method) {
-        //1.封装响应数据
+        // 1.封装响应数据
         Params params = new Params();
         //获得方法的返回值
         Class<?> rclass = method.getReturnType();
-        //2.设置请求或响应类型
+        // 2.设置请求或响应类型
         if (rclass.getTypeName().equals(void.class.getTypeName())) {
             params.setType(Const.BLOB);
         } else {
             params.setType(Const.JSON);
         }
-        //3.设置描述
+        // 3.设置描述
         params.setDescription(apidocActionDao.selectResponseDescriptionById(actionId));
         //查询数据库，存在返回参数之间返回，否则解析代码生成写入数据库并返回
         List<ApidocParam> list = apidocParamDao.selectListByActionId(actionId, true);
         if (null == list || list.isEmpty()) {
             list = new ArrayList<>();
-            //得到通用类型
+            // 得到通用类型
             Type genericParameterTypes = method.getGenericReturnType();
             isType(list, actionId, rclass.getSimpleName().toLowerCase(), rclass, genericParameterTypes, null, 0, true, true);
         }
-//        System.err.println(JsonUtil.toJsonString(list));
-        List<ApidocParam> paramItemList = list2Tree(list);//转tree结构
-//        System.err.println("转换后的  " + JsonUtil.toJsonString(paramItemList));
-        //4.设置参数列表
+        // 转tree结构
+        List<ApidocParam> paramItemList = list2Tree(list);
+        System.err.println("转换后的  " + JsonUtil.toJsonString(paramItemList));
+        // 4.设置参数列表
         params.setParams(paramItemList);
         return params;
     }

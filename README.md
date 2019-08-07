@@ -122,3 +122,40 @@ export const apis={
 };
 ```
 
+5. 数据库表
+```sql
+CREATE TABLE `apidoc_info` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `title` varchar(200) COLLATE utf8_bin NOT NULL COMMENT '文档标题',
+  `description` text COLLATE utf8_bin COMMENT '文档描述',
+  `version` varchar(20) COLLATE utf8_bin NOT NULL DEFAULT '1.0.0' COMMENT '版本信息 如1.0.0',
+  `packageName` varchar(200) COLLATE utf8_bin NOT NULL DEFAULT '' COMMENT '包名，用于区别一个项目中的多个文档',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `title_packageName` (`title`,`packageName`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='文件基本信息';
+
+CREATE TABLE `apidoc_module` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
+  `name` varchar(200) COLLATE utf8_bin NOT NULL COMMENT '模块名称',
+  `order` int(11) NOT NULL COMMENT '排序',
+  `packageName` varchar(200) COLLATE utf8_bin NOT NULL COMMENT '包名，区分不用的文档',
+  `classList` varchar(1000) COLLATE utf8_bin NOT NULL COMMENT '类全名，多个之间用英文逗号隔开',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_packageName` (`name`,`packageName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='文档模块信息';
+
+CREATE TABLE `apidoc_param` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `name` varchar(100) COLLATE utf8_bin DEFAULT NULL COMMENT '名称',
+  `dataType` varchar(50) COLLATE utf8_bin DEFAULT NULL COMMENT '数据类型',
+  `description` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT '描述',
+  `defaultValue` varchar(500) COLLATE utf8_bin DEFAULT NULL COMMENT '默认值',
+  `required` tinyint(4) NOT NULL DEFAULT '1' COMMENT '是否必须',
+  `actionId` int(11) NOT NULL COMMENT '接口id',
+  `returnd` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是返回值',
+  `pid` int(11) NOT NULL DEFAULT '0' COMMENT '父参数id',
+  `pclassName` varchar(200) COLLATE utf8_bin NOT NULL DEFAULT '0' COMMENT '父类名  所属类名',
+  PRIMARY KEY (`id`),
+  KEY `FK_apidoc_param_apidoc_action` (`actionId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='文档参数信息';
+```
